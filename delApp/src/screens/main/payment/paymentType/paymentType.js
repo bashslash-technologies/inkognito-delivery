@@ -3,7 +3,6 @@ import {
   SafeAreaView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
@@ -17,12 +16,8 @@ const PaymentType = ({navigation}) => {
     <Fragment>
       <SafeAreaView style={styles.container}>
         <View style={styles.headerView}>
-          <TouchableOpacity onPress={() => navigation.pop()}>
-            <FontAwesome5
-              name="arrow-left"
-              size={16}
-              style={{fontWeight: 'bold'}}
-            />
+          <TouchableOpacity onPress={() => navigation.openDrawer()}>
+            <FontAwesome5 name="bars" size={20} style={{fontWeight: 'bold'}} />
           </TouchableOpacity>
         </View>
         <View style={{flex: 12, alignItems: 'center'}}>

@@ -1,4 +1,4 @@
-import React, {Fragment, useState} from 'react';
+import React, {Fragment, useState, useRef} from 'react';
 import colors from '../../../constants/colors';
 import {
   View,
@@ -8,16 +8,17 @@ import {
   TextInput,
   Button,
   TouchableOpacity,
-  Image,
 } from 'react-native';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import {RFValue} from 'react-native-responsive-fontsize';
 import {showMessage} from 'react-native-flash-message';
-import {post} from '../../../services/transport';
+import {patch, post} from '../../../services/transport';
 
-export default function Login({navigation}) {
+export default function NewPasswordComponent({navigation, route}) {
   const [loading, setLoading] = useState(false);
-  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const confirmRef = useRef(null);
 
   const validate = (data, errorMsg, type = '') => {
     let valid = true;
@@ -36,18 +37,37 @@ export default function Login({navigation}) {
   };
 
   const handleSubmit = async () => {
-    if (!validate(email.trim(), 'Email Address is invalid', 'email')) return;
+    if (
+      !validate(
+        password.trim(),
+        'Password should be more than 6 characters',
+        'password',
+      )
+    )
+      return;
+
+    if (password.trim() !== confirm.trim()) {
+      return showMessage({
+        message: 'Error',
+        description: 'Passwords do not match',
+        type: 'danger',
+      });
+    }
 
     try {
       setLoading(true);
-      let results = await post('/rider/reset', {
-        email: email.trim(),
+      await patch('/rider/new_password', {
+        id: route.params.id,
+        password: password.trim(),
       });
       setLoading(false);
-      setEmail('');
-      return navigation.push('verify', {
-        id: results.data.payload.id,
-        contact: `+${results.data.payload.profile.contact}`,
+      setPassword('');
+      setConfirm('');
+      navigation.popToTop();
+      showMessage({
+        message: 'Success',
+        description: 'Your password has been reset successfully',
+        type: 'success',
       });
     } catch (e) {
       showMessage({
@@ -80,7 +100,7 @@ export default function Login({navigation}) {
                   fontSize: RFValue(17),
                   color: colors['color-primary-900'],
                 }}>
-                Forgot Password?
+                New Password
               </Text>
             </View>
             <Text
@@ -92,18 +112,31 @@ export default function Login({navigation}) {
                 marginTop: 20,
               }}>
               {' '}
-              Please enter your email to receive instructions on how to reset
-              password
+              Please enter your new password and then confirm it accordingly
             </Text>
             <TextInput
               style={{...styles.Input, marginTop: 30, zIndex: 2}}
-              placeholder="Email"
+              onSubmitEditing={() => confirmRef.current.focus()}
+              placeholder="New Password"
               autoFocus={true}
               keyboardAppearance="dark"
-              keyboardType="email-address"
+              returnKeyType="next"
+              secureTextEntry={true}
               autoCapitalize={'none'}
-              value={email}
-              onChangeText={(e) => setEmail(e)}
+              value={password}
+              onChangeText={(e) => setPassword(e)}
+            />
+            <TextInput
+              ref={confirmRef}
+              style={{...styles.Input, marginTop: 20, zIndex: 2}}
+              placeholder="Confirm Password"
+              autoFocus={true}
+              keyboardAppearance="dark"
+              returnKeyType="done"
+              autoCapitalize={'none'}
+              value={confirm}
+              secureTextEntry={true}
+              onChangeText={(e) => setConfirm(e)}
             />
             <View
               style={{
@@ -117,7 +150,7 @@ export default function Login({navigation}) {
               <Button
                 disabled={loading}
                 onPress={handleSubmit}
-                title={loading ? 'Sending...' : 'Send Now'}
+                title={loading ? 'Sending...' : 'Change Password'}
                 color="#fff"
               />
             </View>

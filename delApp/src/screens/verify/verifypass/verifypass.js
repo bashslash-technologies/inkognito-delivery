@@ -1,19 +1,72 @@
-import React, {Fragment} from 'react';
+import React, {Fragment, useState, useEffect} from 'react';
 import colors from '../../../constants/colors';
 import {
   View,
   Text,
   SafeAreaView,
   StyleSheet,
-  TextInput,
-  Button,
   TouchableOpacity,
-  Image,
+  Modal,
+  ActivityIndicator,
 } from 'react-native';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import {RFValue} from 'react-native-responsive-fontsize';
+import CodeInput from 'react-native-confirmation-code-input';
+import {showMessage} from 'react-native-flash-message';
+import {patch, post} from '../../../services/transport';
 
-export default function VerifyPass({navigation}) {
+export default function VerifyPass({route, navigation}) {
+  const [countDown, setCountdown] = useState(59);
+  const [resendLoad, setResetLoad] = useState(false);
+  const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    let timer;
+    if (countDown > 0) setTimeout(() => setCountdown(countDown - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [countDown]);
+
+  const handleSubmit = async (code) => {
+    try {
+      setLoading(true);
+      let results = await patch('/rider/verify', {
+        id: route.params.id,
+        code,
+      });
+      setLoading(false);
+      return navigation.push('profile', {
+        id: results.data.payload.id,
+      });
+    } catch (e) {
+      setLoading(false);
+      setTimeout(() => {
+        showMessage({
+          message: 'Error',
+          description: e.response.data.error,
+          type: 'danger',
+        });
+      }, 900);
+    }
+  };
+
+  const handleResendVerification = async () => {
+    try {
+      setResetLoad(true);
+      await patch('/rider/resend_code', {
+        id: route.params.id,
+      });
+      setResetLoad(false);
+      if (countDown == 0) setCountdown(59);
+    } catch (e) {
+      setResetLoad(false);
+      setCountdown(0);
+      showMessage({
+        message: 'Error',
+        description: e.response.data.error,
+        type: 'danger',
+      });
+    }
+  };
+
   return (
     <Fragment>
       <SafeAreaView style={styles.container}>
@@ -49,78 +102,52 @@ export default function VerifyPass({navigation}) {
               {' '}
               A verification code has been sent to{' '}
               <Text style={{fontWeight: 'bold', fontSize: RFValue(12)}}>
-                +233 243 987 890
+                {route.params.contact}
               </Text>
             </Text>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-              <TextInput
-                style={{
-                  ...styles.Input,
-                  marginTop: 30,
-                  zIndex: 2,
-                  marginHorizontal: 20,
-                }}
+            <View style={{height: 110}}>
+              <CodeInput
+                keyboardType="numeric"
+                activeColor={'#000'}
+                inactiveColor="#000"
                 autoFocus={true}
-                keyboardAppearance="dark"
-                keyboardType="number-pad"
-                maxLength={1}
-              />
-              <TextInput
-                style={{
-                  ...styles.Input,
-                  marginTop: 30,
-                  zIndex: 2,
-                  marginHorizontal: 20,
+                inputPosition="center"
+                codeLength={4}
+                className={'border-circle'}
+                space={20}
+                size={50}
+                onFulfill={(code) => handleSubmit(code)}
+                containerStyle={{marginTop: 30}}
+                codeInputStyle={{
+                  borderWidth: 1,
+                  borderRadius: 3,
+                  fontSize: 20,
+                  color: '#000',
                 }}
-                keyboardAppearance="dark"
-                keyboardType="number-pad"
-                maxLength={1}
-              />
-              <TextInput
-                style={{
-                  ...styles.Input,
-                  marginTop: 30,
-                  zIndex: 2,
-                  marginHorizontal: 20,
-                }}
-                keyboardAppearance="dark"
-                keyboardType="number-pad"
-                maxLength={1}
-              />
-              <TextInput
-                style={{
-                  ...styles.Input,
-                  marginTop: 30,
-                  zIndex: 2,
-                  marginHorizontal: 20,
-                }}
-                keyboardAppearance="dark"
-                keyboardType="number-pad"
-                maxLength={1}
               />
             </View>
-
-            <View
-              style={{
-                backgroundColor: colors['color-primary-900'],
-                borderRadius: 5,
-                color: '#fff',
-                height: 40,
-                zIndex: 2,
-                marginVertical: 20,
-              }}>
-              <Button
-                onPress={() => {
-                  navigation.navigate('MainNav');
-                }}
-                title="Verify"
-                color="#fff"
-              />
+            <View style={styles.resend_code}>
+              <Text style={styles.subText} subText={true}>
+                Didn't receive SMS?{' '}
+              </Text>
+              {resendLoad ? (
+                <Text subText={true} style={styles.resendBtn}>
+                  {' '}
+                  Loading...
+                </Text>
+              ) : countDown !== 0 ? (
+                <Text subText={true} style={styles.resendBtn}>
+                  {' '}
+                  0:{countDown < 10 ? `0${countDown}` : countDown}
+                </Text>
+              ) : (
+                <TouchableOpacity onPress={handleResendVerification}>
+                  <Text subText={true} style={styles.resendBtn}>
+                    {' '}
+                    Resend Code
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
           </View>
           <View
@@ -151,6 +178,19 @@ export default function VerifyPass({navigation}) {
             Verify your account to get started.
           </Text>
         </View>
+        <View>
+          <Modal transparent={true} visible={loading} animationType={'fade'}>
+            <View
+              style={{
+                flex: 1,
+                backgroundColor: 'rgba(0,0,0,.7)',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}>
+              <ActivityIndicator />
+            </View>
+          </Modal>
+        </View>
       </SafeAreaView>
     </Fragment>
   );
@@ -178,5 +218,14 @@ const styles = StyleSheet.create({
   form: {
     width: '80%',
     justifyContent: 'center',
+  },
+  resend_code: {
+    display: 'flex',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  resendBtn: {
+    fontWeight: 'bold',
   },
 });

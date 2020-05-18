@@ -1,4 +1,4 @@
-import React, {Fragment} from 'react';
+import React, {Fragment, useState, useRef} from 'react';
 import colors from '../../../constants/colors';
 import {
   View,
@@ -6,26 +6,67 @@ import {
   SafeAreaView,
   StyleSheet,
   TextInput,
-  Button,
   Image,
   TouchableOpacity,
 } from 'react-native';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import {RFValue} from 'react-native-responsive-fontsize';
+import {showMessage} from 'react-native-flash-message';
+import {patch} from '../../../services/transport';
 
-export default function Profile({navigation}) {
+export default function Profile({navigation, route}) {
+  const [last, setLast] = useState('');
+  const [others, setOthers] = useState('');
+  const othersRef = useRef(null);
+  const [loading, setLoading] = useState(false);
+
+  const validate = (data, errorMsg, type = '') => {
+    let valid = true;
+    if (type === 'email') valid = /^\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$/.test(data);
+    if (type === 'contact') valid = data.length >= 10;
+    if (type === 'password') valid = data.length >= 6;
+    if (data.trim() === '' || valid === false) {
+      showMessage({
+        message: 'Error',
+        description: errorMsg,
+        type: 'danger',
+      });
+      return false;
+    }
+    return true;
+  };
+
+  const handleSubmit = async () => {
+    if (!validate(last.trim(), 'Last Name is required')) return;
+    if (!validate(others.trim(), 'Other Names is required')) return;
+
+    try {
+      setLoading(true);
+      let results = await patch('/rider/updateProfile', {
+        id: route.params.id,
+        last,
+        others,
+      });
+      setLoading(false);
+      setLast('');
+      setOthers('');
+      return navigation.push('UploadLicense', {
+        id: results.data.payload.id,
+      });
+    } catch (e) {
+      showMessage({
+        message: 'Error',
+        description: e.response.data.error,
+        type: 'danger',
+      });
+      setLoading(false);
+    }
+  };
+
   return (
     <Fragment>
       <SafeAreaView style={styles.container}>
-        <View style={styles.headerView}>
-          {/*<TouchableOpacity onPress={() => navigation.pop()}>*/}
-          {/*  <FontAwesome5*/}
-          {/*    name="arrow-left"*/}
-          {/*    size={16}*/}
-          {/*    style={{fontWeight: 'bold'}}*/}
-          {/*  />*/}
-          {/*</TouchableOpacity>*/}
-        </View>
+        <View style={styles.headerView}></View>
         <View style={{flex: 12, alignItems: 'center'}}>
           <View style={styles.form}>
             <View style={{alignItems: 'center'}}>
@@ -78,23 +119,29 @@ export default function Profile({navigation}) {
                 }}
                 autoFocus={true}
                 keyboardAppearance="dark"
-                placeholder={'First'}
+                placeholder={'Last Name'}
                 returnKeyType={'next'}
+                onSubmitEditing={() => othersRef.current.focus()}
+                value={last}
+                onChangeText={(e) => setLast(e)}
               />
               <TextInput
+                ref={othersRef}
                 style={{
                   ...styles.Input,
                   marginTop: 20,
                   zIndex: 2,
                 }}
                 keyboardAppearance="dark"
-                placeholder={'last'}
+                placeholder={'Other Names'}
                 returnKeyType={'done'}
+                value={others}
+                onChangeText={(e) => setOthers(e)}
               />
             </View>
 
             <TouchableOpacity
-              onPress={() => navigation.push('deldetails')}
+              onPress={handleSubmit}
               style={{
                 backgroundColor: colors['color-primary-900'],
                 borderRadius: 5,
@@ -113,7 +160,7 @@ export default function Profile({navigation}) {
                   fontWeight: '800',
                   fontFamily: 'Quicksand-Light',
                 }}>
-                Next
+                {loading ? 'Loading...' : 'Next'}
               </Text>
 
               <FontAwesome5
@@ -124,58 +171,7 @@ export default function Profile({navigation}) {
               />
             </TouchableOpacity>
           </View>
-
-          <View
-            style={{
-              marginVertical: 20,
-              flexDirection: 'row',
-              width: '70%',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}>
-            <Text
-              style={{
-                textAlign: 'center',
-                fontWeight: '400',
-                opacity: 0.3,
-                fontSize: RFValue(10),
-                fontFamily: 'Quicksand-Light',
-              }}>
-              {' '}
-              By signing up, you agree to our terms of use and privacy policy
-            </Text>
-          </View>
         </View>
-        <TouchableOpacity
-          style={{
-            backgroundColor: colors['color-primary-900'],
-            borderRadius: 5,
-            color: '#fff',
-            height: 40,
-            zIndex: 2,
-            flexDirection: 'row',
-            marginVertical: 30,
-            marginHorizontal: RFValue(10),
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}>
-          <Text
-            style={{
-              color: '#fff',
-              fontSize: RFValue(18),
-              fontWeight: '800',
-              fontFamily: 'Quicksand-Regular',
-            }}>
-            Skip
-          </Text>
-
-          <FontAwesome5
-            style={{position: 'absolute', right: 10}}
-            name={'chevron-right'}
-            size={RFValue(16)}
-            color={'#fff'}
-          />
-        </TouchableOpacity>
       </SafeAreaView>
     </Fragment>
   );

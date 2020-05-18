@@ -91,7 +91,9 @@ const Welcome = ({navigation}) => {
                 alignItems: 'center',
               }}>
               <TouchableOpacity
-                onPress={() => navigation.navigate('loginRoot')}
+                onPress={() =>
+                  navigation.navigate('Auth', {screen: 'loginRoot'})
+                }
                 style={{
                   ...styles.button,
                   flexDirection: 'row',
@@ -113,7 +115,9 @@ const Welcome = ({navigation}) => {
               </TouchableOpacity>
 
               <TouchableOpacity
-                onPress={() => navigation.navigate('registerRoot')}
+                onPress={() =>
+                  navigation.navigate('Auth', {screen: 'registerRoot'})
+                }
                 style={{
                   ...styles.button,
                   backgroundColor: '#0001',
@@ -127,7 +131,7 @@ const Welcome = ({navigation}) => {
                     fontWeight: 'bold',
                     fontFamily: 'Quicksand-Bold',
                   }}>
-                  Sign Up with contact
+                  Sign Up here
                 </Text>
               </TouchableOpacity>
               <View
