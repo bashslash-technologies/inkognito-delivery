@@ -15,7 +15,7 @@ import {
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import {RFValue} from 'react-native-responsive-fontsize';
 import CodeInput from 'react-native-confirmation-code-input';
-import {patch, post} from '../../../services/transport';
+import {get, patch, post} from '../../../services/transport';
 import {showMessage} from 'react-native-flash-message';
 
 export default function Verify({navigation, route}) {
@@ -27,17 +27,30 @@ export default function Verify({navigation, route}) {
     if (countDown > 0) setTimeout(() => setCountdown(countDown - 1), 1000);
     return () => clearTimeout(timer);
   }, [countDown]);
+
   const handleSubmit = async (code) => {
     try {
       setLoading(true);
-      let results = await post('/rider/validate_code', {
-        id: route.params.id,
+      let results = await post('/users/reset', {
+        username: route.params.email,
         code,
       });
-      setLoading(false);
-      return navigation.push('NewPassword', {
-        id: results.data.payload.id,
+      results = results.data;
+      if (!results.success) {
+        setLoading(false);
+        showMessage({
+          message: 'Error',
+          description: results.message,
+          type: 'danger',
+        });
+        return;
+      }
+      navigation.push('NewPassword', {
+        id: results.payload.id,
+        user_data: results.payload,
       });
+      setLoading(false);
+      return;
     } catch (e) {
       setLoading(false);
       setTimeout(() => {
@@ -53,9 +66,17 @@ export default function Verify({navigation, route}) {
   const handleResendVerification = async () => {
     try {
       setResetLoad(true);
-      await post('/rider/reset/resend_code', {
-        id: route.params.id,
-      });
+      let results = await get(`/users/reset?username=${route.params.email}`);
+      results = results.data;
+      if (!results.success) {
+        setLoading(false);
+        showMessage({
+          message: 'Error',
+          description: results.message,
+          type: 'danger',
+        });
+        return;
+      }
       setResetLoad(false);
       if (countDown == 0) setCountdown(59);
     } catch (e) {
@@ -112,10 +133,10 @@ export default function Verify({navigation, route}) {
                 inactiveColor="#000"
                 autoFocus={true}
                 inputPosition="center"
-                codeLength={4}
+                codeLength={6}
                 className={'border-circle'}
-                space={20}
-                size={50}
+                space={10}
+                size={40}
                 onFulfill={(code) => handleSubmit(code)}
                 containerStyle={{marginTop: 30}}
                 codeInputStyle={{

@@ -116,7 +116,7 @@ const RootNavigator = (props) => {
                     component={AuthNavigator}
                     options={{
                       headerShown: false,
-                      nimationTypeForReplace: state.isSignout ? 'pop' : 'push',
+                      animationTypeForReplace: state.isSignout ? 'pop' : 'push',
                     }}
                   />
                 </Fragment>

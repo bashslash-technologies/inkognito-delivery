@@ -31,7 +31,6 @@ const successHandler = (response) => {
 const setToken = (config = {}) => {
   config.headers['Access-Control-Allow-Origin'] = '*';
   config.headers['Accept'] = 'application/json';
-  console.log(config);
   return config;
 };
 
@@ -45,10 +44,10 @@ axios.interceptors.request.use(
   (error) => Promise.reject(error),
 );
 
-export const post = (route, payload) =>
+export const post = (route, payload, config = null) =>
   new Promise(function (resolve, reject) {
     axios
-      .post(route, payload)
+      .post(route, payload, config)
       .then((res) => resolve(res))
       .catch((err) => reject(err));
   });

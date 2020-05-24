@@ -13,7 +13,7 @@ import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import {RFValue} from 'react-native-responsive-fontsize';
 import CodeInput from 'react-native-confirmation-code-input';
 import {showMessage} from 'react-native-flash-message';
-import {patch, post} from '../../../services/transport';
+import {post, get} from '../../../services/transport';
 
 export default function VerifyPass({route, navigation}) {
   const [countDown, setCountdown] = useState(59);
@@ -28,13 +28,24 @@ export default function VerifyPass({route, navigation}) {
   const handleSubmit = async (code) => {
     try {
       setLoading(true);
-      let results = await patch('/rider/verify', {
-        id: route.params.id,
+      let results = await post('/users/verify', {
+        username: route.params.email,
         code,
       });
+      results = results.data;
+      if (!results.success) {
+        setLoading(false);
+        showMessage({
+          message: 'Error',
+          description: results.message,
+          type: 'danger',
+        });
+        return;
+      }
       setLoading(false);
-      return navigation.push('profile', {
-        id: results.data.payload.id,
+      return navigation.push('UploadLicense', {
+        id: results.payload.id,
+        user_data: results.payload,
       });
     } catch (e) {
       setLoading(false);
@@ -51,9 +62,17 @@ export default function VerifyPass({route, navigation}) {
   const handleResendVerification = async () => {
     try {
       setResetLoad(true);
-      await patch('/rider/resend_code', {
-        id: route.params.id,
-      });
+      let results = await get(`/users/verify?username=${route.params.email}`);
+      results = results.data;
+      if (!results.success) {
+        setLoading(false);
+        showMessage({
+          message: 'Error',
+          description: results.message,
+          type: 'danger',
+        });
+        return;
+      }
       setResetLoad(false);
       if (countDown == 0) setCountdown(59);
     } catch (e) {
@@ -112,10 +131,10 @@ export default function VerifyPass({route, navigation}) {
                 inactiveColor="#000"
                 autoFocus={true}
                 inputPosition="center"
-                codeLength={4}
+                codeLength={6}
                 className={'border-circle'}
-                space={20}
-                size={50}
+                space={10}
+                size={40}
                 onFulfill={(code) => handleSubmit(code)}
                 containerStyle={{marginTop: 30}}
                 codeInputStyle={{

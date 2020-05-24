@@ -1,20 +1,22 @@
-import React, {Fragment, useState} from 'react';
+import React, {Fragment, useState, useEffect} from 'react';
 import {
   View,
   Text,
   StyleSheet,
   SafeAreaView,
   TouchableOpacity,
+  TextInput,
 } from 'react-native';
 import colors from '../../../constants/colors';
 import {RFValue} from 'react-native-responsive-fontsize';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import Slider from './upload';
 import {showMessage} from 'react-native-flash-message';
-import {patch} from '../../../services/transport';
+import {post} from '../../../services/transport';
 
 const UploadLicense = ({navigation, route}) => {
   const [file, setFile] = useState(null);
+  const [license, setLicense] = useState('');
   const [loading, setLoading] = useState(false);
 
   const HandleSubmission = async () => {
@@ -24,15 +26,37 @@ const UploadLicense = ({navigation, route}) => {
         description: 'Please choose an image',
         type: 'danger',
       });
+    if (license.trim() === '')
+      return showMessage({
+        message: 'Error',
+        description: 'Please enter your license number',
+        type: 'danger',
+      });
     try {
       setLoading(true);
       let formData = new FormData();
-      formData.append('id', route.params.id);
-      formData.append('image', file);
-      let results = await patch('/rider/uploadLicense', formData);
+      formData.append('licence_certificate', file);
+      formData.append('licence_number', license);
+      let results = await post('/users/setup', formData, {
+        headers: {
+          authorization: `Bearer ${route.params.user_data.token}`,
+        },
+      });
+      results = results.data;
+      console.log(results);
+      if (!results.success) {
+        setLoading(false);
+        showMessage({
+          message: 'Error',
+          description: results.message,
+          type: 'danger',
+        });
+        return;
+      }
+
       setLoading(false);
       return navigation.push('SuccessPage', {
-        user_data: results.data.payload,
+        user_data: results.payload,
       });
     } catch (e) {
       setLoading(false);
@@ -64,7 +88,7 @@ const UploadLicense = ({navigation, route}) => {
             </View>
             <View
               style={{
-                marginVertical: 40,
+                marginVertical: 20,
                 flexDirection: 'row',
                 justifyContent: 'center',
                 alignItems: 'center',
@@ -78,6 +102,21 @@ const UploadLicense = ({navigation, route}) => {
           </View>
 
           <View style={{width: '80%'}}>
+            <TextInput
+              style={{
+                ...styles.Input,
+                marginTop: 20,
+                zIndex: 2,
+              }}
+              keyboardAppearance="dark"
+              placeholder={'License Number'}
+              returnKeyType={'done'}
+              value={license}
+              onChangeText={(e) => setLicense(e)}
+            />
+          </View>
+
+          <View style={{width: '80%'}}>
             <TouchableOpacity
               disabled={loading}
               onPress={HandleSubmission}
@@ -88,7 +127,7 @@ const UploadLicense = ({navigation, route}) => {
                 height: 40,
                 zIndex: 2,
                 flexDirection: 'row',
-                marginVertical: 30,
+                marginVertical: 10,
                 justifyContent: 'center',
                 alignItems: 'center',
               }}>
@@ -99,7 +138,7 @@ const UploadLicense = ({navigation, route}) => {
                   fontWeight: '800',
                   fontFamily: 'Quicksand-Light',
                 }}>
-                {loading ? 'Loading...' : 'Next'}
+                {loading ? 'Loading...' : 'Save'}
               </Text>
 
               <FontAwesome5

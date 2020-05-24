@@ -16,6 +16,8 @@ import {post} from '../../../services/transport';
 
 const Register = ({navigation}) => {
   const [email, setEmail] = useState('');
+  const emailRef = useRef(null);
+  const [name, setName] = useState('');
   const phoneRef = useRef(null);
   const passwordRef = useRef(null);
   const confirmPasswordRef = useRef(null);
@@ -42,6 +44,7 @@ const Register = ({navigation}) => {
 
   const handleSubmit = async () => {
     //validate input
+    if (!validate(name.trim(), 'Name is required')) return;
     if (!validate(email.trim(), 'Email Address is invalid', 'email')) return;
     if (!validate(contact.trim(), 'Phone Number is invalid', 'contact')) return;
     if (
@@ -63,20 +66,37 @@ const Register = ({navigation}) => {
 
     try {
       setLoading(true);
-      let results = await post('/rider', {
+      let results = await post('/users/create', {
+        name: name.trim(),
         email: email.trim(),
-        contact: contact.trim(),
+        contact: contact.trim().slice(-9),
         password: password.trim(),
+        role: 'DELIVERY',
+      });
+      console.log(results);
+      results = results.data;
+
+      if (!results.success) {
+        setLoading(false);
+        showMessage({
+          message: 'Error',
+          description: results.message,
+          type: 'danger',
+        });
+        return;
+      }
+      navigation.push('verifyRegister', {
+        id: results.payload.user.id,
+        email: results.payload.user.email,
+        contact: `+${results.payload.user.contact}`,
       });
       setLoading(false);
+      setName('');
       setEmail('');
       setContact('');
       setPassword('');
       setConfirm('');
-      return navigation.push('verifyRegister', {
-        id: results.data.payload.id,
-        contact: `+${results.data.payload.profile.contact}`,
-      });
+      return;
     } catch (e) {
       showMessage({
         message: 'Error',
@@ -113,10 +133,20 @@ const Register = ({navigation}) => {
               </Text>
             </View>
             <TextInput
+              ref={emailRef}
+              autoFocus={true}
               onSubmitEditing={() => phoneRef.current.focus()}
               style={{...styles.Input, marginTop: 40}}
+              placeholder="Full Name"
+              keyboardAppearance="dark"
+              returnKeyType="next"
+              value={name}
+              onChangeText={(e) => setName(e)}
+            />
+            <TextInput
+              onSubmitEditing={() => phoneRef.current.focus()}
+              style={{...styles.Input, marginTop: 15}}
               placeholder="Email"
-              autoFocus={true}
               keyboardAppearance="dark"
               keyboardType="email-address"
               textContentType="emailAddress"

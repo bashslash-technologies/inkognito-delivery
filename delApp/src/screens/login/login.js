@@ -52,19 +52,43 @@ export default function Login({navigation}) {
 
     try {
       setLoading(true);
-      let results = await post('/rider/login', {
-        email: email.trim(),
+      let results = await post('/users/login', {
+        username: email.trim(),
         password: password.trim(),
       });
-      setLoading(false);
 
-      //check for verification
-      if (!results.data.payload.isVerified)
-        return navigation.navigate('VerifyRegister', {
-          id: results.data.data.id,
-          contact: `+${results.data.data.profile.contact}`,
+      results = results.data;
+      console.log(results.payload.user);
+      if (!results.success) {
+        setLoading(false);
+        showMessage({
+          message: 'Error',
+          description: results.message,
+          type: 'danger',
         });
-      await signIn(results.data.payload);
+        return;
+      }
+      if (results.payload.user.util) {
+        setLoading(false);
+        return navigation.navigate('VerifyRegister', {
+          id: results.payload.user.id,
+          email: results.payload.user.email,
+          contact: `+${results.payload.user.contact}`,
+        });
+      }
+      if (!results.payload.user.documents) {
+        setLoading(false);
+        return navigation.navigate('registerRoot', {
+          screen: 'UploadLicense',
+          params: {
+            id: results.payload.user.id,
+            email: results.payload.user.email,
+            contact: `+${results.payload.user.contact}`,
+          },
+        });
+      }
+      setLoading(false);
+      await signIn(results.payload);
       setEmail('');
       setPassword('');
     } catch (e) {
@@ -145,7 +169,7 @@ export default function Login({navigation}) {
               <Button
                 disabled={loading}
                 onPress={handleSubmit}
-                title={loading ? 'Logging in...' : '"Login"'}
+                title={loading ? 'Logging in...' : 'Login'}
                 color="#fff"
               />
             </View>

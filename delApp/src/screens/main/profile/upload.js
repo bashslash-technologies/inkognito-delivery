@@ -1,5 +1,12 @@
 import React, {Fragment, useRef, useState} from 'react';
-import {Image, TouchableOpacity, View, Dimensions} from 'react-native';
+import {
+  Image,
+  TouchableOpacity,
+  View,
+  Dimensions,
+  TextInput,
+  StyleSheet,
+} from 'react-native';
 import {RFValue} from 'react-native-responsive-fontsize';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import ActionSheet from 'react-native-actionsheet';
@@ -162,5 +169,6 @@ const Slider = ({image, setFile, doc}) => {
     </React.Fragment>
   );
 };
+
 
 export default Slider;

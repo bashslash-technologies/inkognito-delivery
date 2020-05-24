@@ -13,7 +13,7 @@ import {
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import {RFValue} from 'react-native-responsive-fontsize';
 import {showMessage} from 'react-native-flash-message';
-import {post} from '../../../services/transport';
+import {get} from '../../../services/transport';
 
 export default function Login({navigation}) {
   const [loading, setLoading] = useState(false);
@@ -40,15 +40,25 @@ export default function Login({navigation}) {
 
     try {
       setLoading(true);
-      let results = await post('/rider/reset', {
-        email: email.trim(),
+      let results = await get(`/users/reset?username=${email.trim()}`);
+      results = results.data;
+      if (!results.success) {
+        setLoading(false);
+        showMessage({
+          message: 'Error',
+          description: results.message,
+          type: 'danger',
+        });
+        return;
+      }
+      navigation.push('verify', {
+        id: results.payload.id,
+        email: results.payload.email,
+        contact: `+${results.payload.contact}`,
       });
       setLoading(false);
       setEmail('');
-      return navigation.push('verify', {
-        id: results.data.payload.id,
-        contact: `+${results.data.payload.profile.contact}`,
-      });
+      return;
     } catch (e) {
       showMessage({
         message: 'Error',

@@ -56,10 +56,22 @@ export default function NewPasswordComponent({navigation, route}) {
 
     try {
       setLoading(true);
-      await patch('/rider/new_password', {
-        id: route.params.id,
-        password: password.trim(),
-      });
+      let results = await post(
+        `/users/password?user_id=${route.params.user_data.user._id}`,
+        {
+          password: password.trim(),
+        },
+      );
+      results = results.data;
+      if (!results.success) {
+        setLoading(false);
+        showMessage({
+          message: 'Error',
+          description: results.message,
+          type: 'danger',
+        });
+        return;
+      }
       setLoading(false);
       setPassword('');
       setConfirm('');
