@@ -170,5 +170,4 @@ const Slider = ({image, setFile, doc}) => {
   );
 };
 
-
 export default Slider;

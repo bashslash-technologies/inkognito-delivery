@@ -21,6 +21,7 @@ import colors from '../constants/colors';
 import {RFValue} from 'react-native-responsive-fontsize';
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import Feather from 'react-native-vector-icons/Feather';
+import TrackingNav from './homeNav';
 
 const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -99,11 +100,10 @@ const MainNav = () => {
                           fontSize: 20,
                           textAlign: 'center',
                         }}>
-                        {data?.userToken?.profile?.name?.last}{' '}
-                        {data?.userToken?.profile?.name?.others}
+                        {data?.userToken?.user?.email}
                       </Text>
                       <Text style={{color: '#f0f0f0', textAlign: 'center'}}>
-                        +{data?.userToken?.profile?.contact}
+                        +{data?.userToken?.user?.phone}
                       </Text>
                     </View>
                   </View>
@@ -148,14 +148,14 @@ const MainNav = () => {
           activeTintColor: '#343536',
         }}>
         <Drawer.Screen
-          component={Tracking}
+          component={TrackingNav}
           name={'Home'}
           options={{
-            drawerLabel: 'Home',
+            drawerLabel: 'Requests',
             drawerIcon: ({focused}) => (
               <FontAwesome5
-                name={'map-pin'}
-                size={23}
+                name={'paper-plane'}
+                size={20}
                 style={{
                   color: focused ? colors['color-primary-900'] : '#dedede',
                 }}

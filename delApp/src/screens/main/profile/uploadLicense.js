@@ -17,6 +17,7 @@ import {post} from '../../../services/transport';
 const UploadLicense = ({navigation, route}) => {
   const [file, setFile] = useState(null);
   const [license, setLicense] = useState('');
+  const [certNumber, setCertNumber] = useState('');
   const [loading, setLoading] = useState(false);
 
   const HandleSubmission = async () => {
@@ -32,18 +33,26 @@ const UploadLicense = ({navigation, route}) => {
         description: 'Please enter your license number',
         type: 'danger',
       });
+    if (certNumber.trim() === '')
+      return showMessage({
+        message: 'Error',
+        description: 'Please enter your certificate number',
+        type: 'danger',
+      });
     try {
       setLoading(true);
       let formData = new FormData();
-      formData.append('licence_certificate', file);
-      formData.append('licence_number', license);
-      let results = await post('/users/setup', formData, {
+      formData.append('certificate', file);
+      formData.append('vehicle_number', license);
+      formData.append('certificate_number', certNumber);
+      let results = await post('/couriers', formData, {
         headers: {
           authorization: `Bearer ${route.params.user_data.token}`,
         },
       });
       results = results.data;
       console.log(results);
+
       if (!results.success) {
         setLoading(false);
         showMessage({
@@ -113,6 +122,18 @@ const UploadLicense = ({navigation, route}) => {
               returnKeyType={'done'}
               value={license}
               onChangeText={(e) => setLicense(e)}
+            />
+            <TextInput
+              style={{
+                ...styles.Input,
+                marginTop: 20,
+                zIndex: 2,
+              }}
+              keyboardAppearance="dark"
+              placeholder={'Certificate Number'}
+              returnKeyType={'done'}
+              value={certNumber}
+              onChangeText={(e) => setCertNumber(e)}
             />
           </View>
 

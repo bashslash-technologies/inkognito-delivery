@@ -55,10 +55,11 @@ export default function Login({navigation}) {
       let results = await post('/users/login', {
         username: email.trim(),
         password: password.trim(),
+        role: 'COURIER',
       });
 
       results = results.data;
-      console.log(results.payload.user);
+      console.log(results);
       if (!results.success) {
         setLoading(false);
         showMessage({
@@ -68,36 +69,37 @@ export default function Login({navigation}) {
         });
         return;
       }
-      if (results.payload.user.util) {
-        setLoading(false);
-        return navigation.navigate('VerifyRegister', {
-          id: results.payload.user.id,
-          email: results.payload.user.email,
-          contact: `+${results.payload.user.contact}`,
-        });
-      }
-      if (!results.payload.user.documents) {
-        setLoading(false);
-        return navigation.navigate('registerRoot', {
-          screen: 'UploadLicense',
-          params: {
-            id: results.payload.user.id,
-            email: results.payload.user.email,
-            contact: `+${results.payload.user.contact}`,
-          },
-        });
-      }
+
+      // if (results.payload.user.util) {
+      //   setLoading(false);
+      //   return navigation.navigate('VerifyRegister', {
+      //     id: results.payload.user.id,
+      //     email: results.payload.user.email,
+      //     contact: `+${results.payload.user.contact}`,
+      //   });
+      // }
+      // if (!results.payload.user.documents) {
+      //   setLoading(false);
+      //   return navigation.navigate('registerRoot', {
+      //     screen: 'UploadLicense',
+      //     params: {
+      //       id: results.payload.user.id,
+      //       email: results.payload.user.email,
+      //       contact: `+${results.payload.user.contact}`,
+      //     },
+      //   });
+      // }
       setLoading(false);
       await signIn(results.payload);
       setEmail('');
       setPassword('');
     } catch (e) {
+      setLoading(false);
       showMessage({
         message: 'Error',
         description: e.response.data.error,
         type: 'danger',
       });
-      setLoading(false);
     }
   };
 

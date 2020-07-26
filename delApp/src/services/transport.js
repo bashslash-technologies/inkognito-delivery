@@ -1,6 +1,7 @@
 import axios from 'axios';
 import {showMessage} from 'react-native-flash-message';
 import {BASE_URL} from './index';
+import storage from './index';
 
 axios.defaults.baseURL = `${BASE_URL}/api/v1`; //
 
@@ -28,9 +29,16 @@ const successHandler = (response) => {
   return response;
 };
 
-const setToken = (config = {}) => {
+const setToken = async (config = {}) => {
+  const token = await storage.getToken('@user_token');
+
+  if (token) {
+    let cipher = JSON.parse(token);
+    config.headers['authorization'] = `Bearer ${cipher?.token}`;
+  }
+
   config.headers['Access-Control-Allow-Origin'] = '*';
-  config.headers['Accept'] = 'application/json';
+  config.headers.Accept = 'application/json';
   return config;
 };
 

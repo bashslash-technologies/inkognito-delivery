@@ -36,6 +36,7 @@ export default function Verify({navigation, route}) {
         code,
       });
       results = results.data;
+      console.log(results);
       if (!results.success) {
         setLoading(false);
         showMessage({
@@ -123,7 +124,7 @@ export default function Verify({navigation, route}) {
               }}>
               A verification code has been sent to{' '}
               <Text style={{fontWeight: 'bold', fontSize: RFValue(12)}}>
-                {route.params.contact}
+                your phone
               </Text>
             </Text>
             <View style={{height: 110}}>

@@ -66,15 +66,15 @@ const Register = ({navigation}) => {
 
     try {
       setLoading(true);
-      let results = await post('/users/create', {
+      let results = await post('/users/register', {
         name: name.trim(),
         email: email.trim(),
-        contact: contact.trim().slice(-9),
+        phone: contact.trim().slice(-9),
         password: password.trim(),
-        role: 'DELIVERY',
+        role: 'COURIER',
       });
-      console.log(results);
       results = results.data;
+      console.log(results);
 
       if (!results.success) {
         setLoading(false);

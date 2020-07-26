@@ -39,7 +39,7 @@ const SuccessPage = ({route, navigation}) => {
         useNativeDriver: true,
       }),
     ]).start();
-  }, []);
+  }, [progress, textProgress, buttonProgress]);
 
   const handleSubmit = async () => {
     await signIn(route.params.user_data);
@@ -101,7 +101,7 @@ const SuccessPage = ({route, navigation}) => {
             }}>
             <Text
               style={{
-                color: colors['color-primary-900'],
+                color: '#fff',
                 fontSize: 18,
                 fontWeight: 'bold',
               }}>

@@ -20,6 +20,8 @@ export default function NewPasswordComponent({navigation, route}) {
   const [confirm, setConfirm] = useState('');
   const confirmRef = useRef(null);
 
+  console.log(route.params.user_data.user._id);
+
   const validate = (data, errorMsg, type = '') => {
     let valid = true;
     if (type === 'email') valid = /^\w+@[a-zA-Z_]+?\.[a-zA-Z]{2,3}$/.test(data);
@@ -56,12 +58,10 @@ export default function NewPasswordComponent({navigation, route}) {
 
     try {
       setLoading(true);
-      let results = await post(
-        `/users/password?user_id=${route.params.user_data.user._id}`,
-        {
-          password: password.trim(),
-        },
-      );
+      let results = await post(`/users/password`, {
+        password: password.trim(),
+        user_id: route.params.user_data.user._id,
+      });
       results = results.data;
       if (!results.success) {
         setLoading(false);

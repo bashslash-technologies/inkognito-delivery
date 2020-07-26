@@ -52,8 +52,7 @@ export default function Login({navigation}) {
         return;
       }
       navigation.push('verify', {
-        id: results.payload.id,
-        email: results.payload.email,
+        email,
         contact: `+${results.payload.contact}`,
       });
       setLoading(false);

@@ -8,13 +8,13 @@ import {
   Dimensions,
   SafeAreaView,
 } from 'react-native';
-import MapView, {Marker} from 'react-native-maps';
+import MapView, {Marker, PROVIDER_GOOGLE} from 'react-native-maps';
 const {width} = Dimensions.get('window');
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import {RFValue} from 'react-native-responsive-fontsize';
 import Geolocation from '@react-native-community/geolocation';
 
-const Tracking = (props) => {
+const TrackingComponent = ({navigation}) => {
   const [location, setLocation] = useState({
     latitude: 7.9465,
     longitude: 1.0232,
@@ -52,6 +52,7 @@ const Tracking = (props) => {
     <View style={styles.container}>
       <StatusBar barStyle={'dark-content'} />
       <MapView
+        provider={PROVIDER_GOOGLE}
         showsUserLocation
         followsUserLocation
         loadingEnabled
@@ -78,12 +79,13 @@ const Tracking = (props) => {
           }}>
           <View>
             <TouchableOpacity
-              onPress={() => props.navigation.openDrawer()}
-              style={{borderRadius: 50}}
-              underlayColor="transparent">
-              <Image
-                source={require('../../../assets/Images/delguy.jpg')}
-                style={{width: 50, height: 50, borderRadius: 50}}
+              underlayColor={'#000'}
+              style={styles.locateMeButton}
+              onPress={() => navigation.pop()}>
+              <FontAwesome5
+                name="arrow-left"
+                size={20}
+                style={{color: '#000'}}
               />
             </TouchableOpacity>
           </View>
@@ -132,4 +134,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Tracking;
+export default TrackingComponent;
