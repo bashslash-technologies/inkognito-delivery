@@ -1,18 +1,23 @@
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useState, useEffect, useRef, Fragment} from 'react';
 import {
   StyleSheet,
   View,
   StatusBar,
-  Image,
   TouchableOpacity,
   Dimensions,
   SafeAreaView,
+  Text,
+  Modal,
+  ActivityIndicator,
 } from 'react-native';
 import MapView, {Marker, PROVIDER_GOOGLE} from 'react-native-maps';
-const {width} = Dimensions.get('window');
 import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 import {RFValue} from 'react-native-responsive-fontsize';
 import Geolocation from '@react-native-community/geolocation';
+import MapViewDirections from 'react-native-maps-directions';
+const {width, height} = Dimensions.get('window');
+const GOOGLE_MAPS_APIKEY = 'AIzaSyAOSV1eGuYeUr5hZPPUFd4F9Vidgdsekec';
+const destination = {latitude: 37.771707, longitude: -122.4053769};
 
 const TrackingComponent = ({navigation}) => {
   const [location, setLocation] = useState({
@@ -25,6 +30,8 @@ const TrackingComponent = ({navigation}) => {
   const moveToLoc = () => {
     mapView.current.animateToRegion(location, 500);
   };
+  const [loading, setLoading] = useState(true);
+  const [directionData, setDirData] = useState(null);
 
   useEffect(() => {
     const watchID = Geolocation.watchPosition(
@@ -67,6 +74,19 @@ const TrackingComponent = ({navigation}) => {
           longitudeDelta: 0.0421,
         }}>
         <Marker coordinate={location} />
+        <MapViewDirections
+          mode={'BICYCLING'}
+          optimizeWaypoints={true}
+          strokeWidth={3}
+          strokeColor="hotpink"
+          origin={location}
+          destination={destination}
+          apikey={GOOGLE_MAPS_APIKEY}
+          onReady={({distance, duration}) => {
+            setLoading(false);
+            setDirData({distance, duration});
+          }}
+        />
       </MapView>
       <SafeAreaView>
         <View
@@ -101,7 +121,65 @@ const TrackingComponent = ({navigation}) => {
           </TouchableOpacity>
         </View>
       </SafeAreaView>
+      <View style={styles.bottom}>
+        <SafeAreaView>
+          <DetailsCard
+            directionsReady={loading}
+            directionData={directionData}
+          />
+        </SafeAreaView>
+      </View>
+      <Modal visible={loading} transparent={true}>
+        <Fragment>
+          <View
+            style={{
+              flex: 1,
+              justifyContent: 'center',
+              alignItems: 'center',
+              backgroundColor: 'rgba(0,0,0,0.5)',
+            }}>
+            <ActivityIndicator color={'#fff'} />
+          </View>
+        </Fragment>
+      </Modal>
     </View>
+  );
+};
+
+const DetailsCard = ({directionsReady, directionData}) => {
+  return (
+    <Fragment>
+      {!directionsReady ? (
+        <Fragment>
+          <View style={styles.detailsRoot}>
+            <View style={styles.left}>
+              <View style={styles.leftContent}>
+                <FontAwesome5 name={'truck'} color={'red'} size={RFValue(20)} />
+              </View>
+            </View>
+            <View style={styles.right}>
+              <Text type={'bold'} style={{fontSize: RFValue(15)}}>
+                Distance: {directionData?.distance} km away
+              </Text>
+              <Text type={'light'} style={{fontSize: RFValue(11)}}>
+                Duration: About {parseFloat(directionData?.duration).toFixed(2)}{' '}
+                mins
+              </Text>
+            </View>
+          </View>
+        </Fragment>
+      ) : (
+        <Fragment>
+          <View style={styles.detailsRoot}>
+            <View style={styles.right}>
+              <Text type={'light'} style={{fontSize: RFValue(11)}}>
+                Loading...
+              </Text>
+            </View>
+          </View>
+        </Fragment>
+      )}
+    </Fragment>
   );
 };
 
@@ -131,6 +209,63 @@ const styles = StyleSheet.create({
     shadowRadius: 3.84,
 
     elevation: 5,
+  },
+  bottom: {
+    position: 'absolute',
+    zIndex: 1,
+    bottom: 0,
+    backgroundColor: '#fff',
+    width: '100%',
+    height: height / 5,
+    borderTopRightRadius: RFValue(20),
+    borderTopLeftRadius: RFValue(20),
+    padding: RFValue(20),
+    justifyContent: 'center',
+  },
+  detailsRoot: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+    borderRadius: RFValue(20),
+    paddingHorizontal: RFValue(10),
+    paddingVertical: RFValue(30),
+  },
+  left: {flex: 1, alignItems: 'center'},
+  leftContent: {
+    backgroundColor: '#f2d8db',
+    padding: RFValue(10),
+    borderRadius: RFValue(10),
+  },
+  right: {flex: 3},
+  bottomHalf: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: RFValue(15),
+  },
+  bottomLeft: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  bottomRight: {
+    flex: 3,
+  },
+  bottomLeftContent: {
+    backgroundColor: '#f0f0f0',
+    paddingHorizontal: RFValue(25),
+    paddingVertical: RFValue(22),
+    borderRadius: RFValue(15),
+  },
+  bottomRightContent: {
+    backgroundColor: '#f0f0f0',
+    paddingHorizontal: RFValue(20),
+    paddingVertical: RFValue(10),
+    borderRadius: RFValue(15),
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.7)',
   },
 });
 
